@@ -1,0 +1,21 @@
+title: Test WhisperX Transcription
+nodes:
+  - node_id: whisperx-transcribe#1
+    task: self::whisperx-transcribe
+    inputs_from:
+      - handle: audio_file
+        value: /oomol-driver/oomol-storage/Area22211_audio.mp3
+      - handle: model_size
+        value: "base"
+      - handle: language
+        value:
+      - handle: batch_size
+        value: 16
+      - handle: enable_alignment
+        value: true
+      - handle: enable_diarization
+        value: false
+      - handle: hf_token
+        value: "${{OO_SECRET:HuggingFace,HuggingFace,HF_TOKEN}}"
+      - handle: compute_type
+        value: "float16"

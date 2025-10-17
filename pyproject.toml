@@ -1,0 +1,21 @@
+[project]
+name = "whisperx1"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "alwaysmavs",email = "beingswu@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "whisperx (>=3.7.4,<4.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+packages = [{include = "whisperx1", from = "src"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

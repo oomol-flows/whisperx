@@ -1,4 +1,4 @@
-title: Test WhisperX Transcription with SRT Generation
+title: "%test-whisperx-transcription-with-srt-generation%"
 nodes:
   - node_id: whisperx-transcribe#1
     task: self::whisperx-transcribe

@@ -5,3 +5,8 @@ scripts:
     poetry install --no-root
     apt update && apt install -y ffmpeg
 icon: ./icon.png
+name: whisperx
+repository: https://github.com/oomol-flows/whisperx.git
+releaseNotes: init
+displayName: "%display-name%"
+description: "%key1%"

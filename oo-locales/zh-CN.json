@@ -1,0 +1,20 @@
+{
+  "key1": "一个强大的音频处理工具，可自动转录音频文件并生成专业字幕。本项目帮助您将音频录音中的口语内容转换为带有时间戳和说话人识别的准确文本。",
+  "display-name": "WhisperX",
+  "test-whisperx-transcription-with-srt-generation": "测试 WhisperX 转录并生成 SRT",
+  "generate-srt-subtitles": "生成 SRT 字幕",
+  "convert-whisperx-transcription-json-to-srt-subtitle-format-with": "将 WhisperX 转录 JSON 转换为 SRT 字幕格式，并可选添加说话人分离标签",
+  "whisperx-transcription-json-file-with-segments-and-speaker-info": "带有分段和说话人信息的 WhisperX 转录 JSON 文件",
+  "include-speaker-labels-in-subtitles-e-g-speaker_01": "在字幕中包含说话人标签（例如：SPEAKER_01）",
+  "output-srt-file-path-leave-empty-for-auto-generation": "输出 SRT 文件路径（留空则自动生成）",
+  "whisperx-transcribe": "WhisperX 转录",
+  "fast-automatic-speech-recognition-with-word-level-timestamps-and": "快速自动语音识别，支持词级时间戳和可选说话人分离。支持多种语言和音频格式。",
+  "audio-file-to-transcribe-supports-mp3-wav-m4a-flac-etc": "要转录的音频文件（支持 mp3、wav、m4a、flac 等格式）。",
+  "whisper-model-size-larger-more-accurate-but-slower": "Whisper 模型大小（越大 = 越准确但速度越慢）",
+  "language-code-e-g-en-zh-ja-leave-empty-for-auto-detection": "语言代码（例如：en，zh，ja）。留空以自动检测",
+  "batch-size-for-inference-higher-faster-but-more-gpu-memory": "推理时的批量大小（数值越大，速度越快，但占用更多 GPU 内存）",
+  "enable-word-level-timestamp-alignment-more-accurate-timestamps": "启用单词级时间戳对齐（更精确的时间戳）",
+  "enable-speaker-diarization-requires-huggingface-token": "启用说话人分离（需要 HuggingFace 令牌）",
+  "huggingface-token-required-for-diarization-feature": "HuggingFace 令牌（用于分离功能，必填）",
+  "computation-precision-float16-for-gpu-int8-for-cpu": "计算精度（ GPU 使用 float16， CPU 使用 int8 ）"
+}

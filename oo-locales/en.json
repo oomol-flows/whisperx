@@ -1,0 +1,20 @@
+{
+  "key1": "A powerful audio processing tool that can automatically transcribe audio files and generate professional subtitles. This project helps you convert spoken content from audio recordings into accurate text with timestamps and speaker identification.",
+  "display-name": "WhisperX",
+  "test-whisperx-transcription-with-srt-generation": "Test WhisperX Transcription with SRT Generation",
+  "generate-srt-subtitles": "Generate SRT Subtitles",
+  "convert-whisperx-transcription-json-to-srt-subtitle-format-with": "Convert WhisperX transcription JSON to SRT subtitle format with optional speaker diarization labels",
+  "whisperx-transcription-json-file-with-segments-and-speaker-info": "WhisperX transcription JSON file with segments and speaker info",
+  "include-speaker-labels-in-subtitles-e-g-speaker_01": "Include speaker labels in subtitles (e.g., SPEAKER_01)",
+  "output-srt-file-path-leave-empty-for-auto-generation": "Output SRT file path (leave empty for auto-generation)",
+  "whisperx-transcribe": "WhisperX Transcribe",
+  "fast-automatic-speech-recognition-with-word-level-timestamps-and": "Fast automatic speech recognition with word-level timestamps and optional speaker diarization. Supports multiple languages and audio formats.",
+  "audio-file-to-transcribe-supports-mp3-wav-m4a-flac-etc": "Audio file to transcribe (supports mp3, wav, m4a, flac, etc.)",
+  "whisper-model-size-larger-more-accurate-but-slower": "Whisper model size (larger = more accurate but slower)",
+  "language-code-e-g-en-zh-ja-leave-empty-for-auto-detection": "Language code (e.g., en, zh, ja). Leave empty for auto-detection",
+  "batch-size-for-inference-higher-faster-but-more-gpu-memory": "Batch size for inference (higher = faster but more GPU memory)",
+  "enable-word-level-timestamp-alignment-more-accurate-timestamps": "Enable word-level timestamp alignment (more accurate timestamps)",
+  "enable-speaker-diarization-requires-huggingface-token": "Enable speaker diarization (requires HuggingFace token)",
+  "huggingface-token-required-for-diarization-feature": "HuggingFace token (required for diarization feature)",
+  "computation-precision-float16-for-gpu-int8-for-cpu": "Computation precision (float16 for GPU, int8 for CPU)"
+}

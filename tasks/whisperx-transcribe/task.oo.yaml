@@ -1,13 +1,13 @@
 inputs_def:
   - handle: audio_file
-    description: "Audio file to transcribe (supports mp3, wav, m4a, flac, etc.)"
+    description: "%audio-file-to-transcribe-supports-mp3-wav-m4a-flac-etc%"
     json_schema:
       type: string
       ui:widget: file
     nullable: false
 
   - handle: model_size
-    description: "Whisper model size (larger = more accurate but slower)"
+    description: "%whisper-model-size-larger-more-accurate-but-slower%"
     json_schema:
       type: string
       enum:
@@ -21,14 +21,14 @@ inputs_def:
     nullable: false
 
   - handle: language
-    description: "Language code (e.g., en, zh, ja). Leave empty for auto-detection"
+    description: "%language-code-e-g-en-zh-ja-leave-empty-for-auto-detection%"
     json_schema:
       type: string
     value:
     nullable: true
 
   - handle: batch_size
-    description: "Batch size for inference (higher = faster but more GPU memory)"
+    description: "%batch-size-for-inference-higher-faster-but-more-gpu-memory%"
     json_schema:
       type: integer
       minimum: 1
@@ -37,21 +37,21 @@ inputs_def:
     nullable: false
 
   - handle: enable_alignment
-    description: "Enable word-level timestamp alignment (more accurate timestamps)"
+    description: "%enable-word-level-timestamp-alignment-more-accurate-timestamps%"
     json_schema:
       type: boolean
     value: true
     nullable: false
 
   - handle: enable_diarization
-    description: "Enable speaker diarization (requires HuggingFace token)"
+    description: "%enable-speaker-diarization-requires-huggingface-token%"
     json_schema:
       type: boolean
     value: false
     nullable: false
 
   - handle: hf_token
-    description: "HuggingFace token (required for diarization feature)"
+    description: "%huggingface-token-required-for-diarization-feature%"
     json_schema:
       contentMediaType: oomol/secret
       type: string
@@ -59,7 +59,7 @@ inputs_def:
     nullable: true
 
   - handle: compute_type
-    description: "Computation precision (float16 for GPU, int8 for CPU)"
+    description: "%computation-precision-float16-for-gpu-int8-for-cpu%"
     json_schema:
       type: string
       enum:
@@ -92,9 +92,8 @@ executor:
     entry: __init__.py
     spawn: false
 
-title: "WhisperX Transcribe"
+title: "%whisperx-transcribe%"
 icon: ":carbon:audio-console:"
-description: "Fast automatic speech recognition with word-level timestamps and
-  optional speaker diarization. Supports multiple languages and audio formats."
+description: "%fast-automatic-speech-recognition-with-word-level-timestamps-and%"
 ui:
   default_width: 593.3949020481755

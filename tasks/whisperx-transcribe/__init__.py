@@ -22,11 +22,33 @@ class Outputs(typing.TypedDict):
 # endregion
 
 from oocana import Context
-import whisperx
-import torch
 import json
 import os
+import sys
 from pathlib import Path
+import ctypes
+
+# Preload cuDNN libraries to fix "Cannot load symbol cudnnCreateConvolutionDescriptor" error
+try:
+    site_packages = Path(sys.executable).parent.parent / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
+    cudnn_lib_dir = site_packages / "nvidia" / "cudnn" / "lib"
+
+    if cudnn_lib_dir.exists():
+        # Preload cuDNN libraries in correct order
+        cudnn_libs = [
+            cudnn_lib_dir / "libcudnn_ops.so.9",
+            cudnn_lib_dir / "libcudnn_cnn.so.9",
+            cudnn_lib_dir / "libcudnn.so.9",
+        ]
+        for lib in cudnn_libs:
+            if lib.exists():
+                ctypes.CDLL(str(lib), mode=ctypes.RTLD_GLOBAL)
+except Exception as e:
+    # If preloading fails, continue anyway
+    pass
+
+import whisperx
+import torch
 
 
 def main(params: Inputs, context: Context) -> Outputs:

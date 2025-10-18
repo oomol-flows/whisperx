@@ -1,0 +1,49 @@
+inputs_def:
+  - handle: json_file
+    description: "WhisperX transcription JSON file with segments and speaker info"
+    json_schema:
+      type: string
+      ui:widget: file
+    nullable: false
+
+  - handle: include_speaker
+    description: "Include speaker labels in subtitles (e.g., SPEAKER_01)"
+    json_schema:
+      type: boolean
+    value: true
+    nullable: false
+
+  - handle: output_path
+    description: "Output SRT file path (leave empty for auto-generation)"
+    json_schema:
+      type: string
+      ui:widget: save
+      ui:options:
+        filters:
+          - name: SRT
+            extensions:
+              - srt
+        excludeAll: true
+    value: null
+    nullable: true
+
+outputs_def:
+  - handle: srt_file
+    description: "Path to the generated SRT file"
+    json_schema:
+      type: string
+
+  - handle: subtitle_count
+    description: "Number of subtitle entries generated"
+    json_schema:
+      type: integer
+
+executor:
+  name: python
+  options:
+    entry: __init__.py
+    spawn: false
+
+title: "Generate SRT Subtitles"
+icon: ":carbon:text-annotation-toggle:"
+description: "Convert WhisperX transcription JSON to SRT subtitle format with optional speaker diarization labels"

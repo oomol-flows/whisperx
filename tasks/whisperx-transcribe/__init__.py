@@ -94,12 +94,15 @@ def main(params: Inputs, context: Context) -> Outputs:
     audio = whisperx.load_audio(audio_file)
 
     # Load model
+    print(f"Loading WhisperX model: {model_size}")
+    print(f"Device: {device}, Compute type: {compute_type}")
     model = whisperx.load_model(
         model_size,
         device,
         compute_type=compute_type,
         language=language
     )
+    print(f"✓ Model {model_size} loaded successfully")
 
     # Transcribe
     result = model.transcribe(audio, batch_size=batch_size)

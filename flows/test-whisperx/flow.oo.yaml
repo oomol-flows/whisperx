@@ -4,8 +4,9 @@ nodes:
     task: self::whisperx-transcribe
     inputs_from:
       - handle: audio_file
+        value: /oomol-driver/oomol-storage/《酌见2》俞敏洪对话张朝阳#以价值观为导向的人生意义_audio.mp3
       - handle: model_size
-        value: "medium"
+        value: large-v3
       - handle: language
         value:
       - handle: batch_size

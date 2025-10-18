@@ -49,6 +49,7 @@ except Exception as e:
 
 import whisperx
 import torch
+from whisperx.diarize import DiarizationPipeline
 
 
 def main(params: Inputs, context: Context) -> Outputs:
@@ -72,6 +73,11 @@ def main(params: Inputs, context: Context) -> Outputs:
     hf_token = params.get("hf_token") or ""
     hf_token = hf_token.strip() if hf_token else None
     compute_type = params.get("compute_type", "float16")
+
+    # Debug: Check diarization settings
+    print(f"Enable diarization: {enable_diarization}")
+    print(f"HF token available: {bool(hf_token)}")
+    print(f"HF token length: {len(hf_token) if hf_token else 0}")
 
     # Validate input file
     if not os.path.exists(audio_file):
@@ -116,20 +122,27 @@ def main(params: Inputs, context: Context) -> Outputs:
                 device,
                 return_char_alignments=False
             )
+            print(f"✓ Alignment completed successfully")
         except Exception as e:
+            print(f"⚠ Alignment failed: {str(e)}")
             # Continue with unaligned results
             pass
 
     # Speaker diarization
     if enable_diarization and hf_token:
         try:
-            diarize_model = whisperx.DiarizationPipeline(
+            print(f"Starting speaker diarization...")
+            diarize_model = DiarizationPipeline(
                 use_auth_token=hf_token,
                 device=device
             )
             diarize_segments = diarize_model(audio)
             result = whisperx.assign_word_speakers(diarize_segments, result)
+            print(f"✓ Speaker diarization completed successfully")
         except Exception as e:
+            print(f"⚠ Speaker diarization failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
             # Continue without diarization
             pass
 

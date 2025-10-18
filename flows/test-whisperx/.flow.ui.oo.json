@@ -1,6 +1,7 @@
 {
   "nodes": {
     "whisperx-transcribe#1": {
+      "contentWidth": 483.20001220703125,
       "rfNode": {
         "position": {
           "x": 0,

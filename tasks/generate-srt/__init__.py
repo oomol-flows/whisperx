@@ -157,9 +157,9 @@ def apply_language_preset(preset: str) -> dict:
             "max_words": 20,  # Increased to keep sentences together
         },
         "chinese": {
-            "max_chars": 20,  # 15-20 characters per line
-            "max_duration": 5.0,  # Longer duration for reading
-            "chars_per_second": 4.0,  # ~4 chars/second for Chinese
+            "max_chars": 35,  # 15-20 per line, 30-40 for double line
+            "max_duration": 6.0,  # Longer duration for reading (35 chars / 5 CPS ≈ 7s)
+            "chars_per_second": 5.0,  # ~4-6 chars/second for Chinese
             "max_words": 0,  # Not applicable for Chinese
         },
         "japanese": {
@@ -339,6 +339,79 @@ def merge_segments_by_sentences(
     return merged_segments
 
 
+def smart_line_break(text: str, max_chars_per_line: int = 20) -> str:
+    """
+    Intelligently break text into two lines for subtitle display
+
+    Args:
+        text: Text to break
+        max_chars_per_line: Target characters per line (15-20 for Chinese, ~42 for English)
+
+    Returns:
+        Text with line break (\n) inserted at optimal position
+    """
+    # If text is short enough for single line, return as-is
+    if len(text) <= max_chars_per_line:
+        return text
+
+    # Detect if text is primarily Chinese
+    chinese_count = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+    is_chinese = chinese_count > len(text) * 0.3
+
+    # Define break points (punctuation and natural breaks)
+    if is_chinese:
+        # Chinese punctuation marks
+        break_chars = '，。、；：！？,;:!?'
+        # Ideal break position: around max_chars_per_line (15-20 for Chinese)
+        ideal_pos = max_chars_per_line
+    else:
+        # English: break at spaces or punctuation
+        break_chars = ' ,.;:!?'
+        # For English, target around 42 chars (half of 84)
+        ideal_pos = max_chars_per_line
+
+    # Try to find break point near the middle
+    # Search window: from ideal_pos-5 to ideal_pos+5
+    best_pos = -1
+
+    # First, look for punctuation marks in the ideal range
+    for offset in range(6):  # Check ±5 chars from ideal position
+        # Check forward
+        pos_forward = ideal_pos + offset
+        if pos_forward < len(text) and text[pos_forward] in break_chars:
+            best_pos = pos_forward + 1  # Break after punctuation
+            break
+
+        # Check backward
+        pos_backward = ideal_pos - offset
+        if pos_backward > 0 and text[pos_backward] in break_chars:
+            best_pos = pos_backward + 1  # Break after punctuation
+            break
+
+    # If no punctuation found, for English try to break at nearest space
+    if best_pos == -1 and not is_chinese:
+        for offset in range(ideal_pos // 2):  # Expand search range
+            pos_forward = ideal_pos + offset
+            if pos_forward < len(text) and text[pos_forward] == ' ':
+                best_pos = pos_forward + 1
+                break
+
+            pos_backward = ideal_pos - offset
+            if pos_backward > 0 and text[pos_backward] == ' ':
+                best_pos = pos_backward + 1
+                break
+
+    # If still no good break point, force break at ideal position
+    if best_pos == -1:
+        best_pos = ideal_pos
+
+    # Insert line break
+    line1 = text[:best_pos].strip()
+    line2 = text[best_pos:].strip()
+
+    return f"{line1}\n{line2}"
+
+
 def generate_srt(segments: list, include_speaker: bool = True) -> str:
     """
     Generate SRT content from WhisperX segments
@@ -374,6 +447,18 @@ def generate_srt(segments: list, include_speaker: bool = True) -> str:
 
             if speaker:
                 text = f"[{speaker}] {text}"
+
+        # Apply smart line breaking
+        # Detect language and apply appropriate line length
+        chinese_count = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+        is_chinese = chinese_count > len(text) * 0.3
+
+        if is_chinese:
+            # Chinese: break at 15-20 chars
+            text = smart_line_break(text, max_chars_per_line=18)
+        else:
+            # English: break at ~42 chars
+            text = smart_line_break(text, max_chars_per_line=42)
 
         # Build SRT entry
         srt_entry = f"{i}\n{start_ts} --> {end_ts}\n{text}\n"

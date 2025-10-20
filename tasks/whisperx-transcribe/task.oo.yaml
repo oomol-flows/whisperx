@@ -17,7 +17,7 @@ inputs_def:
         - medium
         - large-v2
         - large-v3
-    value: base
+    value: medium
     nullable: false
 
   - handle: language

@@ -10,8 +10,8 @@ inputs_def:
     description: "%include-speaker-labels-in-subtitles-e-g-speaker_01%"
     json_schema:
       type: boolean
-    value: true
-    nullable: false
+    value: null
+    nullable: true
 
   - handle: output_path
     description: "%output-srt-file-path-leave-empty-for-auto-generation%"
@@ -24,18 +24,19 @@ inputs_def:
             extensions:
               - srt
         excludeAll: true
-    value:
+    value: null
     nullable: true
 
   - handle: use_spacy_segmentation
     description: "Use spaCy for intelligent sentence segmentation"
     json_schema:
       type: boolean
-    value: true
-    nullable: false
+    value: null
+    nullable: true
 
   - handle: spacy_model
-    description: "spaCy language model selection (auto: detect from text, or specific model)"
+    description: "spaCy language model (auto: auto-detect and apply
+      language-specific standards)"
     json_schema:
       type: string
       enum:
@@ -46,35 +47,60 @@ inputs_def:
         - de_core_news_sm
         - fr_core_news_sm
         - es_core_news_sm
-    value: "auto"
-    nullable: false
+    value: null
+    nullable: true
+
+  - handle: subtitle_language_preset
+    description: "Language preset for subtitle standards (auto: detect from text)"
+    json_schema:
+      type: string
+      enum:
+        - auto
+        - english
+        - chinese
+        - japanese
+        - custom
+    value: null
+    nullable: true
 
   - handle: max_chars_per_subtitle
-    description: "Maximum characters per subtitle line (EN: 42-84, CN: 15-20)"
+    description: "Maximum characters per subtitle (EN: 42-84, CN: 15-20). Auto-set
+      by language preset."
     json_schema:
       type: integer
       minimum: 10
       maximum: 150
-    value: 20
-    nullable: false
+    value: null
+    nullable: true
 
   - handle: max_duration_per_subtitle
-    description: "Maximum duration per subtitle in seconds (0 = no limit)"
+    description: "Maximum duration per subtitle in seconds. Auto-set by language preset."
     json_schema:
       type: number
       minimum: 0
       maximum: 10
-    value: 5.0
-    nullable: false
+    value: null
+    nullable: true
 
   - handle: chars_per_second
-    description: "Maximum characters per second reading speed (CN: ~4, EN: ~20)"
+    description: "Characters per second reading speed (EN: 17-21, CN: ~4). Auto-set
+      by language preset."
     json_schema:
       type: number
       minimum: 1
+      maximum: 50
+    value: null
+    nullable: true
+
+  - handle: max_words_per_subtitle
+    description: "Maximum words per subtitle (EN only: 7 single line / 15 double
+      line, 0 = no limit)"
+    json_schema:
+      type: integer
+      minimum: 0
       maximum: 30
-    value: 4.0
-    nullable: false
+    value: null
+    nullable: true
 
 outputs_def:
   - handle: srt_file

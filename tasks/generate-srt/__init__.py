@@ -2,13 +2,15 @@
 import typing
 class Inputs(typing.TypedDict):
     json_file: str
-    include_speaker: bool
+    include_speaker: bool | None
     output_path: str | None
-    use_spacy_segmentation: bool
-    spacy_model: str
-    max_chars_per_subtitle: int
-    max_duration_per_subtitle: float
-    chars_per_second: float
+    use_spacy_segmentation: bool | None
+    spacy_model: typing.Literal["auto", "en_core_web_sm", "zh_core_web_sm", "ja_core_news_sm", "de_core_news_sm", "fr_core_news_sm", "es_core_news_sm"] | None
+    subtitle_language_preset: typing.Literal["auto", "english", "chinese", "japanese", "custom"] | None
+    max_chars_per_subtitle: int | None
+    max_duration_per_subtitle: float | None
+    chars_per_second: float | None
+    max_words_per_subtitle: int | None
 class Outputs(typing.TypedDict):
     srt_file: typing.NotRequired[str]
     subtitle_count: typing.NotRequired[int]
@@ -111,15 +113,15 @@ def smart_join_words(words: List[Dict[str, Any]]) -> str:
     return "".join(result)
 
 
-def detect_language(text: str) -> str:
+def detect_language(text: str) -> tuple[str, str]:
     """
-    Detect the primary language from text and return appropriate spaCy model
+    Detect the primary language from text and return appropriate spaCy model and language preset
 
     Args:
         text: Sample text to analyze
 
     Returns:
-        Recommended spaCy model name
+        Tuple of (spaCy model name, language preset)
     """
     # Count character types
     chinese_count = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
@@ -127,30 +129,71 @@ def detect_language(text: str) -> str:
 
     # If significant Chinese characters, use Chinese model
     if chinese_count > len(text) * 0.1:
-        return "zh_core_web_sm"
+        return ("zh_core_web_sm", "chinese")
 
     # If significant Japanese characters, use Japanese model
     if japanese_count > len(text) * 0.1:
-        return "ja_core_news_sm"
+        return ("ja_core_news_sm", "japanese")
 
     # Default to English
-    return "en_core_web_sm"
+    return ("en_core_web_sm", "english")
+
+
+def apply_language_preset(preset: str) -> dict:
+    """
+    Apply language-specific subtitle standards
+
+    Args:
+        preset: Language preset name
+
+    Returns:
+        Dictionary with subtitle parameters
+    """
+    presets = {
+        "english": {
+            "max_chars": 84,  # Professional standard: 42-84 chars for comfortable reading
+            "max_duration": 7.0,  # Allow longer duration for complete sentences
+            "chars_per_second": 21.0,  # Comfortable: 17-21, max 41
+            "max_words": 20,  # Increased to keep sentences together
+        },
+        "chinese": {
+            "max_chars": 20,  # 15-20 characters per line
+            "max_duration": 5.0,  # Longer duration for reading
+            "chars_per_second": 4.0,  # ~4 chars/second for Chinese
+            "max_words": 0,  # Not applicable for Chinese
+        },
+        "japanese": {
+            "max_chars": 20,  # Similar to Chinese
+            "max_duration": 5.0,
+            "chars_per_second": 4.0,
+            "max_words": 0,
+        },
+    }
+
+    return presets.get(preset, presets["chinese"])  # Default to Chinese
 
 
 def merge_segments_by_sentences(
     segments: List[Dict[str, Any]],
     spacy_model: str,
     max_chars: int,
-    max_duration: float = 5.0,
-    chars_per_second: float = 4.0
+    max_duration: float = 3.0,
+    chars_per_second: float = 21.0,
+    max_words_per_subtitle: int = 15
 ) -> List[Dict[str, Any]]:
     """
     Merge WhisperX segments based on sentence boundaries using spaCy
 
-    Optimized for Chinese subtitles with mixed Chinese-English support:
-    - Default max_chars: 20 (15-20 characters per line for Chinese)
-    - Default chars_per_second: 4 (reading speed for Chinese)
-    - Default max_duration: 5 seconds per subtitle
+    English subtitle standards (professional):
+    - chars_per_second: 17-21 comfortable, max 41
+    - max_chars: 42-84 characters (for 2-3 second display)
+    - max_duration: 2-3 seconds per subtitle
+    - max_words_per_subtitle: 7 words (single line) / 15 words (double line)
+
+    Chinese subtitle standards:
+    - max_chars: 15-20 characters
+    - chars_per_second: ~4
+    - max_duration: 5 seconds
     - Intelligent word spacing for mixed language content
 
     Args:
@@ -159,6 +202,7 @@ def merge_segments_by_sentences(
         max_chars: Maximum characters per subtitle
         max_duration: Maximum duration per subtitle in seconds
         chars_per_second: Maximum reading speed in characters per second
+        max_words_per_subtitle: Maximum words per subtitle block (0 = no limit, for English only)
 
     Returns:
         List of merged segments with sentence boundaries
@@ -166,8 +210,8 @@ def merge_segments_by_sentences(
     # Auto-detect language if requested
     if spacy_model == "auto":
         sample_text = " ".join([seg.get("text", "") for seg in segments[:5]])
-        spacy_model = detect_language(sample_text)
-        print(f"Auto-detected language model: {spacy_model}")
+        spacy_model, _ = detect_language(sample_text)
+        print(f"Auto-detected spaCy model: {spacy_model}")
 
     try:
         # Try to load the spaCy model
@@ -232,22 +276,58 @@ def merge_segments_by_sentences(
         if not sentence_words:
             continue
 
-        # Split by constraints: max_chars, max_duration, and chars_per_second
-        current_segment_words = []
+        # Try to keep the entire sentence together first
+        full_sentence_text = smart_join_words(sentence_words)
+        full_sentence_duration = sentence_words[-1].get("end", 0) - sentence_words[0].get("start", 0)
+        full_sentence_word_count = len([w for w in sentence_words if w.get("word", "").strip()])
 
-        for word_obj in sentence_words:
-            # Calculate what the new segment would look like
-            test_words = current_segment_words + [word_obj]
-            test_text = smart_join_words(test_words)
-            test_duration = test_words[-1].get("end", 0) - test_words[0].get("start", 0)
+        # Check if the entire sentence fits within constraints
+        sentence_fits = (
+            len(full_sentence_text) <= max_chars and
+            (max_duration == 0 or full_sentence_duration <= max_duration) and
+            (max_words_per_subtitle == 0 or full_sentence_word_count <= max_words_per_subtitle)
+        )
 
-            # Check all constraints
-            text_too_long = len(test_text) > max_chars
-            duration_too_long = max_duration > 0 and test_duration > max_duration
-            reading_too_fast = chars_per_second > 0 and test_duration > 0 and len(test_text) / test_duration > chars_per_second * 1.2
+        # If entire sentence fits, keep it together
+        if sentence_fits:
+            merged_segments.append({
+                "start": sentence_words[0].get("start", 0),
+                "end": sentence_words[-1].get("end", 0),
+                "text": full_sentence_text,
+                "speaker": sentence_words[0].get("speaker"),
+                "words": sentence_words
+            })
+        else:
+            # Only split if necessary - use word-by-word approach
+            current_segment_words = []
 
-            # If adding this word violates constraints, save current segment
-            if current_segment_words and (text_too_long or duration_too_long):
+            for word_obj in sentence_words:
+                # Calculate what the new segment would look like
+                test_words = current_segment_words + [word_obj]
+                test_text = smart_join_words(test_words)
+                test_duration = test_words[-1].get("end", 0) - test_words[0].get("start", 0)
+                test_word_count = len([w for w in test_words if w.get("word", "").strip()])
+
+                # Check critical constraints (prioritize keeping text together)
+                text_too_long = len(test_text) > max_chars
+                duration_too_long = max_duration > 0 and test_duration > max_duration * 1.5  # Allow 50% buffer
+                too_many_words = max_words_per_subtitle > 0 and test_word_count > max_words_per_subtitle * 1.3  # Allow 30% buffer
+
+                # If adding this word violates hard constraints, save current segment
+                if current_segment_words and (text_too_long or duration_too_long or too_many_words):
+                    merged_segments.append({
+                        "start": current_segment_words[0].get("start", 0),
+                        "end": current_segment_words[-1].get("end", 0),
+                        "text": smart_join_words(current_segment_words),
+                        "speaker": current_segment_words[0].get("speaker"),
+                        "words": current_segment_words
+                    })
+                    current_segment_words = []
+
+                current_segment_words.append(word_obj)
+
+            # Add remaining words as final segment (only if we split the sentence)
+            if current_segment_words:
                 merged_segments.append({
                     "start": current_segment_words[0].get("start", 0),
                     "end": current_segment_words[-1].get("end", 0),
@@ -255,19 +335,6 @@ def merge_segments_by_sentences(
                     "speaker": current_segment_words[0].get("speaker"),
                     "words": current_segment_words
                 })
-                current_segment_words = []
-
-            current_segment_words.append(word_obj)
-
-        # Add remaining words as final segment
-        if current_segment_words:
-            merged_segments.append({
-                "start": current_segment_words[0].get("start", 0),
-                "end": current_segment_words[-1].get("end", 0),
-                "text": smart_join_words(current_segment_words),
-                "speaker": current_segment_words[0].get("speaker"),
-                "words": current_segment_words
-            })
 
     return merged_segments
 
@@ -341,23 +408,69 @@ def main(params: Inputs, context: Context) -> Outputs:
     if not segments:
         raise ValueError("No segments found in the JSON file")
 
-    # Apply spaCy sentence segmentation if enabled
-    use_spacy = params.get("use_spacy_segmentation", True)
+    # Apply spaCy sentence segmentation if enabled (default: True)
+    use_spacy = params.get("use_spacy_segmentation")
+    if use_spacy is None:
+        use_spacy = True  # Best practice: use intelligent segmentation by default
+
     if use_spacy:
-        spacy_model = params.get("spacy_model", "en_core_web_sm")
-        max_chars = params.get("max_chars_per_subtitle", 20)
-        max_duration = params.get("max_duration_per_subtitle", 5.0)
-        chars_per_second = params.get("chars_per_second", 4.0)
+        spacy_model = params.get("spacy_model")
+        if spacy_model is None:
+            spacy_model = "auto"  # Best practice: auto-detect language
+
+        language_preset = params.get("subtitle_language_preset")
+        if language_preset is None:
+            language_preset = "auto"  # Best practice: auto-detect language standards
+
+        # Auto-detect language preset if needed
+        if language_preset == "auto" or language_preset is None:
+            sample_text = " ".join([seg.get("text", "") for seg in segments[:5]])
+            _, language_preset = detect_language(sample_text)
+            print(f"Auto-detected language preset: {language_preset}")
+
+        # Apply language preset if not custom
+        if language_preset != "custom":
+            preset_params = apply_language_preset(language_preset)
+
+            # Use preset values, but allow user overrides
+            max_chars = params.get("max_chars_per_subtitle")
+            if max_chars is None:
+                max_chars = preset_params["max_chars"]
+
+            max_duration = params.get("max_duration_per_subtitle")
+            if max_duration is None:
+                max_duration = preset_params["max_duration"]
+
+            chars_per_second = params.get("chars_per_second")
+            if chars_per_second is None:
+                chars_per_second = preset_params["chars_per_second"]
+
+            max_words_per_subtitle = params.get("max_words_per_subtitle")
+            if max_words_per_subtitle is None:
+                max_words_per_subtitle = preset_params["max_words"]
+
+            print(f"Applied {language_preset} preset: {max_chars} chars, {chars_per_second} CPS, {max_duration}s max")
+        else:
+            # Custom mode: use user values or fallback defaults
+            max_chars = params.get("max_chars_per_subtitle") or 20
+            max_duration = params.get("max_duration_per_subtitle") or 3.0
+            chars_per_second = params.get("chars_per_second") or 4.0
+            max_words_per_subtitle = params.get("max_words_per_subtitle") or 0
+
         segments = merge_segments_by_sentences(
             segments,
             spacy_model,
             max_chars,
             max_duration,
-            chars_per_second
+            chars_per_second,
+            max_words_per_subtitle
         )
 
     # Generate SRT content
-    include_speaker = params.get("include_speaker", True)
+    include_speaker = params.get("include_speaker")
+    if include_speaker is None:
+        include_speaker = True  # Best practice: include speaker labels by default
+
     srt_content = generate_srt(segments, include_speaker)
 
     # Determine output path

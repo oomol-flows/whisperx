@@ -27,6 +27,47 @@ inputs_def:
     value:
     nullable: true
 
+  - handle: use_spacy_segmentation
+    description: "Use spaCy for intelligent sentence segmentation"
+    json_schema:
+      type: boolean
+    value: true
+    nullable: false
+
+  - handle: spacy_model
+    description: "spaCy language model (e.g., en_core_web_sm, zh_core_web_sm)"
+    json_schema:
+      type: string
+    value: "en_core_web_sm"
+    nullable: false
+
+  - handle: max_chars_per_subtitle
+    description: "Maximum characters per subtitle line (EN: 42-84, CN: 15-20)"
+    json_schema:
+      type: integer
+      minimum: 10
+      maximum: 150
+    value: 20
+    nullable: false
+
+  - handle: max_duration_per_subtitle
+    description: "Maximum duration per subtitle in seconds (0 = no limit)"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 10
+    value: 5.0
+    nullable: false
+
+  - handle: chars_per_second
+    description: "Maximum characters per second reading speed (CN: ~4, EN: ~20)"
+    json_schema:
+      type: number
+      minimum: 1
+      maximum: 30
+    value: 4.0
+    nullable: false
+
 outputs_def:
   - handle: srt_file
     description: "Path to the generated SRT file"

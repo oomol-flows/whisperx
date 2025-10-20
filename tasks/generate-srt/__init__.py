@@ -17,9 +17,36 @@ class Outputs(typing.TypedDict):
 from oocana import Context
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
+
 import spacy
 from typing import List, Dict, Any
+
+
+def download_spacy_model(model_name: str) -> bool:
+    """
+    Download a spaCy model if not already installed
+
+    Args:
+        model_name: Name of the spaCy model to download
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        print(f"Downloading spaCy model: {model_name}...")
+        subprocess.check_call(
+            [sys.executable, "-m", "spacy", "download", model_name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        print(f"Successfully downloaded: {model_name}")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to download {model_name}: {e}")
+        return False
 
 
 def format_timestamp(seconds: float) -> str:
@@ -40,6 +67,76 @@ def format_timestamp(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
+def smart_join_words(words: List[Dict[str, Any]]) -> str:
+    """
+    Intelligently join words with proper spacing for mixed Chinese-English text
+
+    Args:
+        words: List of word objects with 'word' key
+
+    Returns:
+        Properly formatted text string
+    """
+    if not words:
+        return ""
+
+    result = []
+    for i, word_obj in enumerate(words):
+        word = word_obj.get("word", "").strip()
+        if not word:
+            continue
+
+        # Add word to result
+        if i == 0:
+            result.append(word)
+        else:
+            prev_word = words[i - 1].get("word", "").strip()
+
+            # Check if previous or current word contains Chinese characters
+            def has_chinese(text):
+                return any('\u4e00' <= char <= '\u9fff' for char in text)
+
+            prev_is_chinese = has_chinese(prev_word[-1]) if prev_word else False
+            curr_is_chinese = has_chinese(word[0]) if word else False
+
+            # Add space only when both words are non-Chinese (e.g., English)
+            # or when transitioning between punctuation and words
+            needs_space = not (prev_is_chinese or curr_is_chinese)
+
+            if needs_space:
+                result.append(" " + word)
+            else:
+                result.append(word)
+
+    return "".join(result)
+
+
+def detect_language(text: str) -> str:
+    """
+    Detect the primary language from text and return appropriate spaCy model
+
+    Args:
+        text: Sample text to analyze
+
+    Returns:
+        Recommended spaCy model name
+    """
+    # Count character types
+    chinese_count = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+    japanese_count = sum(1 for char in text if '\u3040' <= char <= '\u309f' or '\u30a0' <= char <= '\u30ff')
+
+    # If significant Chinese characters, use Chinese model
+    if chinese_count > len(text) * 0.1:
+        return "zh_core_web_sm"
+
+    # If significant Japanese characters, use Japanese model
+    if japanese_count > len(text) * 0.1:
+        return "ja_core_news_sm"
+
+    # Default to English
+    return "en_core_web_sm"
+
+
 def merge_segments_by_sentences(
     segments: List[Dict[str, Any]],
     spacy_model: str,
@@ -50,14 +147,15 @@ def merge_segments_by_sentences(
     """
     Merge WhisperX segments based on sentence boundaries using spaCy
 
-    Optimized for Chinese subtitles:
+    Optimized for Chinese subtitles with mixed Chinese-English support:
     - Default max_chars: 20 (15-20 characters per line for Chinese)
     - Default chars_per_second: 4 (reading speed for Chinese)
     - Default max_duration: 5 seconds per subtitle
+    - Intelligent word spacing for mixed language content
 
     Args:
         segments: List of WhisperX segment dictionaries
-        spacy_model: spaCy model name to use
+        spacy_model: spaCy model name to use (or 'auto' for auto-detection)
         max_chars: Maximum characters per subtitle
         max_duration: Maximum duration per subtitle in seconds
         chars_per_second: Maximum reading speed in characters per second
@@ -65,15 +163,34 @@ def merge_segments_by_sentences(
     Returns:
         List of merged segments with sentence boundaries
     """
+    # Auto-detect language if requested
+    if spacy_model == "auto":
+        sample_text = " ".join([seg.get("text", "") for seg in segments[:5]])
+        spacy_model = detect_language(sample_text)
+        print(f"Auto-detected language model: {spacy_model}")
+
     try:
+        # Try to load the spaCy model
         nlp = spacy.load(spacy_model)
+        print(f"spaCy model loaded: {spacy_model}")
+
     except OSError:
-        # If model not found, fall back to original segments
-        print(f"Warning: spaCy model '{spacy_model}' not found. Using original segments.")
-        return segments
+        # Model not found, try to download it
+        print(f"spaCy model '{spacy_model}' not found locally")
+        if download_spacy_model(spacy_model):
+            try:
+                # Reload after download
+                nlp = spacy.load(spacy_model)
+                print(f"spaCy model loaded: {spacy_model}")
+            except OSError:
+                print(f"Error: Failed to load model after download. Using original segments.")
+                return segments
+        else:
+            print(f"Error: Could not download model. Using original segments.")
+            return segments
 
     # Combine all text to detect sentence boundaries
-    full_text = " ".join([seg.get("text", "").strip() for seg in segments])
+    full_text = smart_join_words([{"word": seg.get("text", "").strip()} for seg in segments])
     doc = nlp(full_text)
 
     # Get sentence boundaries
@@ -108,7 +225,7 @@ def merge_segments_by_sentences(
         while word_idx < len(words_timeline) and len(sentence_text) < len(sentence):
             word_obj = words_timeline[word_idx]
             word_text = word_obj.get("word", "").strip()
-            sentence_text += " " + word_text
+            sentence_text = smart_join_words(sentence_words + [word_obj])
             sentence_words.append(word_obj)
             word_idx += 1
 
@@ -119,11 +236,9 @@ def merge_segments_by_sentences(
         current_segment_words = []
 
         for word_obj in sentence_words:
-            word_text = word_obj.get("word", "").strip()
-
             # Calculate what the new segment would look like
             test_words = current_segment_words + [word_obj]
-            test_text = " ".join([w.get("word", "") for w in test_words]).strip()
+            test_text = smart_join_words(test_words)
             test_duration = test_words[-1].get("end", 0) - test_words[0].get("start", 0)
 
             # Check all constraints
@@ -136,7 +251,7 @@ def merge_segments_by_sentences(
                 merged_segments.append({
                     "start": current_segment_words[0].get("start", 0),
                     "end": current_segment_words[-1].get("end", 0),
-                    "text": " ".join([w.get("word", "") for w in current_segment_words]).strip(),
+                    "text": smart_join_words(current_segment_words),
                     "speaker": current_segment_words[0].get("speaker"),
                     "words": current_segment_words
                 })
@@ -149,7 +264,7 @@ def merge_segments_by_sentences(
             merged_segments.append({
                 "start": current_segment_words[0].get("start", 0),
                 "end": current_segment_words[-1].get("end", 0),
-                "text": " ".join([w.get("word", "") for w in current_segment_words]).strip(),
+                "text": smart_join_words(current_segment_words),
                 "speaker": current_segment_words[0].get("speaker"),
                 "words": current_segment_words
             })

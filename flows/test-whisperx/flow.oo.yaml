@@ -41,3 +41,5 @@ nodes:
         value: 5.0
       - handle: chars_per_second
         value: 4.0
+      - handle: gpu_mode
+        value: auto

@@ -35,10 +35,18 @@ inputs_def:
     nullable: false
 
   - handle: spacy_model
-    description: "spaCy language model (e.g., en_core_web_sm, zh_core_web_sm)"
+    description: "spaCy language model selection (auto: detect from text, or specific model)"
     json_schema:
       type: string
-    value: "en_core_web_sm"
+      enum:
+        - auto
+        - en_core_web_sm
+        - zh_core_web_sm
+        - ja_core_news_sm
+        - de_core_news_sm
+        - fr_core_news_sm
+        - es_core_news_sm
+    value: "auto"
     nullable: false
 
   - handle: max_chars_per_subtitle

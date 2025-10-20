@@ -1,0 +1,23 @@
+title: "Test SRT Generation with GPU Auto Mode"
+nodes:
+  - node_id: generate-srt#1
+    task: self::generate-srt
+    inputs_from:
+      - handle: json_file
+        value: /oomol-driver/oomol-storage/whisperx-output/kl_transcription.json
+      - handle: include_speaker
+        value: false
+      - handle: output_path
+        value:
+      - handle: use_spacy_segmentation
+        value: true
+      - handle: spacy_model
+        value: "en_core_web_sm"
+      - handle: gpu_mode
+        value: "cpu"
+      - handle: max_chars_per_subtitle
+        value: 42
+      - handle: max_duration_per_subtitle
+        value: 5.0
+      - handle: chars_per_second
+        value: 20.0

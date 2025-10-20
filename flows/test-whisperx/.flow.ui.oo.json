@@ -5,7 +5,7 @@
       "rfNode": {
         "position": {
           "x": 897,
-          "y": 130
+          "y": 157
         }
       }
     },
@@ -14,7 +14,7 @@
       "rfNode": {
         "position": {
           "x": 1446,
-          "y": 116.5
+          "y": 143.5
         }
       }
     },
@@ -23,7 +23,7 @@
       "rfNode": {
         "position": {
           "x": 481,
-          "y": 224.5
+          "y": 238
         }
       }
     },
@@ -31,7 +31,7 @@
       "contentWidth": 350,
       "rfNode": {
         "position": {
-          "x": 2033,
+          "x": 2549,
           "y": 0
         }
       }
@@ -41,7 +41,16 @@
       "rfNode": {
         "position": {
           "x": 0,
-          "y": 155.5
+          "y": 182.5
+        }
+      }
+    },
+    "srt-translation#1": {
+      "contentWidth": 450,
+      "rfNode": {
+        "position": {
+          "x": 2033,
+          "y": 200
         }
       }
     }

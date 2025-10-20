@@ -152,19 +152,19 @@ def apply_language_preset(preset: str) -> dict:
     presets = {
         "english": {
             "max_chars": 84,  # Professional standard: 42-84 chars for comfortable reading
-            "max_duration": 7.0,  # Allow longer duration for complete sentences
+            "max_duration": 8.0,  # Generous duration to keep complete sentences
             "chars_per_second": 21.0,  # Comfortable: 17-21, max 41
-            "max_words": 20,  # Increased to keep sentences together
+            "max_words": 25,  # Generous word limit - prioritize sentence integrity
         },
         "chinese": {
             "max_chars": 35,  # 15-20 per line, 30-40 for double line
-            "max_duration": 6.0,  # Longer duration for reading (35 chars / 5 CPS ≈ 7s)
+            "max_duration": 8.0,  # Generous duration for complete sentences
             "chars_per_second": 5.0,  # ~4-6 chars/second for Chinese
             "max_words": 0,  # Not applicable for Chinese
         },
         "japanese": {
-            "max_chars": 20,  # Similar to Chinese
-            "max_duration": 5.0,
+            "max_chars": 25,  # Slightly more generous for complete phrases
+            "max_duration": 6.0,
             "chars_per_second": 4.0,
             "max_words": 0,
         },
@@ -184,29 +184,39 @@ def merge_segments_by_sentences(
     """
     Merge WhisperX segments based on sentence boundaries using spaCy
 
-    English subtitle standards (professional):
-    - chars_per_second: 17-21 comfortable, max 41
-    - max_chars: 42-84 characters (for 2-3 second display)
-    - max_duration: 2-3 seconds per subtitle
-    - max_words_per_subtitle: 7 words (single line) / 15 words (double line)
+    PRINCIPLE: Prioritize sentence integrity - keep complete sentences together.
+    Only split when absolutely necessary (exceeds generous buffered limits).
 
-    Chinese subtitle standards:
-    - max_chars: 15-20 characters
-    - chars_per_second: ~4
-    - max_duration: 5 seconds
-    - Intelligent word spacing for mixed language content
+    English subtitle standards (with sentence-first approach):
+    - PRIORITY: Keep sentences complete
+    - max_chars: 84 characters baseline (allows up to 126 with 1.5x buffer)
+    - max_duration: 8 seconds baseline (allows up to 16s with 2x buffer)
+    - max_words: 25 words baseline (allows up to 37 with 1.5x buffer)
+    - chars_per_second: 21 (comfortable reading speed)
+
+    Chinese subtitle standards (with sentence-first approach):
+    - PRIORITY: Keep sentences complete
+    - max_chars: 35 characters baseline (allows up to 52 with 1.5x buffer)
+    - max_duration: 8 seconds baseline (allows up to 16s with 2x buffer)
+    - chars_per_second: ~5
 
     Args:
         segments: List of WhisperX segment dictionaries
         spacy_model: spaCy model name to use (or 'auto' for auto-detection)
-        max_chars: Maximum characters per subtitle
-        max_duration: Maximum duration per subtitle in seconds
+        max_chars: Baseline maximum characters (buffer applied internally)
+        max_duration: Baseline maximum duration (buffer applied internally)
         chars_per_second: Maximum reading speed in characters per second
-        max_words_per_subtitle: Maximum words per subtitle block (0 = no limit, for English only)
+        max_words_per_subtitle: Baseline maximum words (buffer applied, 0 = no limit)
 
     Returns:
-        List of merged segments with sentence boundaries
+        List of merged segments with complete sentence boundaries
     """
+    # Define buffer constants for the entire function
+    # Use moderate buffers to balance sentence integrity with readability
+    CHAR_BUFFER = 1.25  # Allow 25% more characters (84 → 105 chars)
+    DURATION_BUFFER = 1.5  # Allow 50% more duration (8s → 12s)
+    WORD_BUFFER = 1.4  # Allow 40% more words (25 → 35 words)
+
     # Auto-detect language if requested
     if spacy_model == "auto":
         sample_text = " ".join([seg.get("text", "") for seg in segments[:5]])
@@ -262,34 +272,51 @@ def merge_segments_by_sentences(
         if not sentence:
             continue
 
+        # Normalize sentence for matching (remove spaces, lowercase, remove punctuation)
+        def normalize(text):
+            import re
+            # Remove all whitespace and punctuation, lowercase
+            return re.sub(r'[^\w]', '', text.lower())
+
+        sentence_normalized = normalize(sentence)
+
         # Find words in this sentence
         sentence_words = []
-        sentence_text = ""
 
-        while word_idx < len(words_timeline) and len(sentence_text) < len(sentence):
+        # Collect words until we match the sentence
+        while word_idx < len(words_timeline):
             word_obj = words_timeline[word_idx]
-            word_text = word_obj.get("word", "").strip()
-            sentence_text = smart_join_words(sentence_words + [word_obj])
             sentence_words.append(word_obj)
             word_idx += 1
+
+            # Check if we've collected the complete sentence
+            reconstructed = smart_join_words(sentence_words)
+            reconstructed_normalized = normalize(reconstructed)
+
+            # If we've matched the sentence, stop
+            if reconstructed_normalized == sentence_normalized:
+                break
+
+            # Safety check: if we've exceeded the sentence length significantly, stop
+            # (This handles edge cases where word-level data might not perfectly match)
+            if len(reconstructed_normalized) > len(sentence_normalized) * 1.2:
+                break
 
         if not sentence_words:
             continue
 
-        # Try to keep the entire sentence together first
+        # PRINCIPLE: Keep sentences complete - only split if absolutely necessary
         full_sentence_text = smart_join_words(sentence_words)
         full_sentence_duration = sentence_words[-1].get("end", 0) - sentence_words[0].get("start", 0)
         full_sentence_word_count = len([w for w in sentence_words if w.get("word", "").strip()])
 
-        # Check if the entire sentence fits within constraints
-        sentence_fits = (
-            len(full_sentence_text) <= max_chars and
-            (max_duration == 0 or full_sentence_duration <= max_duration) and
-            (max_words_per_subtitle == 0 or full_sentence_word_count <= max_words_per_subtitle)
-        )
+        # Check if the entire sentence fits (with moderate buffers)
+        char_fits = len(full_sentence_text) <= max_chars * CHAR_BUFFER
+        duration_fits = max_duration == 0 or full_sentence_duration <= max_duration * DURATION_BUFFER
+        words_fit = max_words_per_subtitle == 0 or full_sentence_word_count <= max_words_per_subtitle * WORD_BUFFER
 
-        # If entire sentence fits, keep it together
-        if sentence_fits:
+        # Keep sentence together if it fits within buffered constraints
+        if char_fits and duration_fits and words_fit:
             merged_segments.append({
                 "start": sentence_words[0].get("start", 0),
                 "end": sentence_words[-1].get("end", 0),
@@ -298,23 +325,23 @@ def merge_segments_by_sentences(
                 "words": sentence_words
             })
         else:
-            # Only split if necessary - use word-by-word approach
+            # Only split if sentence exceeds buffered constraints
+            # Use strict constraints for split points (no buffers)
             current_segment_words = []
 
             for word_obj in sentence_words:
-                # Calculate what the new segment would look like
                 test_words = current_segment_words + [word_obj]
                 test_text = smart_join_words(test_words)
                 test_duration = test_words[-1].get("end", 0) - test_words[0].get("start", 0)
                 test_word_count = len([w for w in test_words if w.get("word", "").strip()])
 
-                # Check critical constraints (prioritize keeping text together)
-                text_too_long = len(test_text) > max_chars
-                duration_too_long = max_duration > 0 and test_duration > max_duration * 1.5  # Allow 50% buffer
-                too_many_words = max_words_per_subtitle > 0 and test_word_count > max_words_per_subtitle * 1.3  # Allow 30% buffer
+                # Use STRICT constraints only when forcing a split
+                exceeds_chars = len(test_text) > max_chars * CHAR_BUFFER
+                exceeds_duration = max_duration > 0 and test_duration > max_duration * DURATION_BUFFER
+                exceeds_words = max_words_per_subtitle > 0 and test_word_count > max_words_per_subtitle * WORD_BUFFER
 
-                # If adding this word violates hard constraints, save current segment
-                if current_segment_words and (text_too_long or duration_too_long or too_many_words):
+                # Only split if we really must (exceeds all buffered constraints)
+                if current_segment_words and (exceeds_chars or exceeds_duration or exceeds_words):
                     merged_segments.append({
                         "start": current_segment_words[0].get("start", 0),
                         "end": current_segment_words[-1].get("end", 0),
@@ -326,7 +353,7 @@ def merge_segments_by_sentences(
 
                 current_segment_words.append(word_obj)
 
-            # Add remaining words as final segment (only if we split the sentence)
+            # Add remaining words
             if current_segment_words:
                 merged_segments.append({
                     "start": current_segment_words[0].get("start", 0),
@@ -336,7 +363,58 @@ def merge_segments_by_sentences(
                     "words": current_segment_words
                 })
 
-    return merged_segments
+    # Post-process: Merge very short subtitles with adjacent ones to avoid readability issues
+    # Short subtitles (< 1 second or < 3 words) can be hard to read and should be merged
+    final_segments = []
+    i = 0
+
+    while i < len(merged_segments):
+        current = merged_segments[i]
+        current_duration = current["end"] - current["start"]
+        current_word_count = len([w for w in current.get("words", []) if w.get("word", "").strip()])
+        current_text = current["text"]
+
+        # Check if this subtitle is too short
+        is_too_short = (
+            current_duration < 0.8 or  # Less than 0.8 seconds
+            current_word_count <= 2 or  # 2 or fewer words
+            len(current_text) < 10  # Less than 10 characters
+        )
+
+        # Try to merge with next subtitle if current is too short
+        if is_too_short and i + 1 < len(merged_segments):
+            next_seg = merged_segments[i + 1]
+
+            # Calculate merged stats
+            merged_words = current.get("words", []) + next_seg.get("words", [])
+            merged_text = current_text + " " + next_seg["text"]
+            merged_duration = next_seg["end"] - current["start"]
+            merged_word_count = len([w for w in merged_words if w.get("word", "").strip()])
+
+            # Check if merged subtitle is still within reasonable limits
+            merge_ok = (
+                len(merged_text) <= max_chars * CHAR_BUFFER and
+                (max_duration == 0 or merged_duration <= max_duration * DURATION_BUFFER) and
+                (max_words_per_subtitle == 0 or merged_word_count <= max_words_per_subtitle * WORD_BUFFER)
+            )
+
+            if merge_ok:
+                # Merge current and next
+                final_segments.append({
+                    "start": current["start"],
+                    "end": next_seg["end"],
+                    "text": merged_text,
+                    "speaker": current.get("speaker"),
+                    "words": merged_words
+                })
+                i += 2  # Skip next subtitle since we merged it
+                continue
+
+        # No merge needed or possible
+        final_segments.append(current)
+        i += 1
+
+    return final_segments
 
 
 def smart_line_break(text: str, max_chars_per_line: int = 20) -> str:

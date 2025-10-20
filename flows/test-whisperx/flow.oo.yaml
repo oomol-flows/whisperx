@@ -9,7 +9,7 @@ nodes:
           - node_id: extract-audio#1
             output_handle: audio_file
       - handle: model_size
-        value: medium
+        value: large-v3
       - handle: language
         value:
       - handle: batch_size
@@ -60,7 +60,7 @@ nodes:
       - handle: audio_quality
         value: 192
       - handle: use_gpu
-        value: true
+        value: false
     task: ffmpeg::extract-audio
   - node_id: add-subtitles#1
     title: "添加视频字幕 #1"
@@ -71,7 +71,7 @@ nodes:
             output_handle: video_file
       - handle: subtitle_file
         from_node:
-          - node_id: generate-srt#1
+          - node_id: srt-translation#1
             output_handle: srt_file
       - handle: subtitle_style
         value: default
@@ -110,5 +110,25 @@ nodes:
                   - webm
                   - flv
             excludeAll: true
+        value: /oomol-driver/oomol-storage/video/bm.mp4
         nullable: false
-        value: /oomol-driver/oomol-storage/video/pr.mp4
+  - node_id: srt-translation#1
+    title: "SRT 翻译 #1"
+    inputs_from:
+      - handle: srt_file
+        from_node:
+          - node_id: generate-srt#1
+            output_handle: srt_file
+      - handle: source_language
+        value: auto
+      - handle: target_language
+        value: zh
+      - handle: translation_style
+        value: null
+      - handle: llm
+        value:
+          model: deepseek-chat
+          temperature: 0.5
+          top_p: 1
+          max_tokens: 128000
+    task: srt-lab::srt-translation

@@ -5,6 +5,9 @@ nodes:
     inputs_from:
       - handle: audio_file
         value: /oomol-driver/oomol-storage/kl.mp3
+        from_node:
+          - node_id: extract-audio#1
+            output_handle: audio_file
       - handle: model_size
         value: medium
       - handle: language
@@ -28,20 +31,84 @@ nodes:
           - node_id: whisperx-transcribe#1
             output_handle: output_file
       - handle: include_speaker
-        value: true
+        value:
       - handle: output_path
         value:
       - handle: use_spacy_segmentation
-        value: true
+        value:
       - handle: spacy_model
-        value: "en_core_web_sm"
+        value:
       - handle: max_chars_per_subtitle
-        value: 20
+        value:
       - handle: max_duration_per_subtitle
-        value: 5.0
+        value:
       - handle: chars_per_second
-        value: 4.0
+        value:
       - handle: subtitle_language_preset
-        value: auto
+        value:
       - handle: max_words_per_subtitle
-        value: 0
+        value:
+  - node_id: extract-audio#1
+    title: "从视频中提取音频 #1"
+    inputs_from:
+      - handle: video_file
+        from_node:
+          - node_id: +value#1
+            output_handle: video_file
+      - handle: output_format
+        value: mp3
+      - handle: audio_quality
+        value: 192
+      - handle: use_gpu
+        value: true
+    task: ffmpeg::extract-audio
+  - node_id: add-subtitles#1
+    title: "添加视频字幕 #1"
+    inputs_from:
+      - handle: video_file
+        from_node:
+          - node_id: +value#1
+            output_handle: video_file
+      - handle: subtitle_file
+        from_node:
+          - node_id: generate-srt#1
+            output_handle: srt_file
+      - handle: subtitle_style
+        value: default
+      - handle: font_name
+        value: Arial
+      - handle: font_size
+        value: 20
+      - handle: font_color
+        value: "#FFFFFF"
+      - handle: outline_color
+        value: "#000000"
+      - handle: subtitle_position
+        value: bottom
+      - handle: hard_subtitle
+        value: true
+      - handle: use_gpu
+        value: true
+      - handle: subtitle_language
+        value:
+    task: ffmpeg::add-subtitles
+  - node_id: +value#1
+    title: "Value #1"
+    values:
+      - handle: video_file
+        json_schema:
+          type: string
+          ui:widget: file
+          ui:options:
+            filters:
+              - name: Video Files
+                extensions:
+                  - mp4
+                  - avi
+                  - mov
+                  - mkv
+                  - webm
+                  - flv
+            excludeAll: true
+        nullable: false
+        value: /oomol-driver/oomol-storage/video/pr.mp4

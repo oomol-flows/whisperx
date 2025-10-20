@@ -10,3 +10,5 @@ repository: https://github.com/oomol-flows/whisperx.git
 releaseNotes: init
 displayName: "%display-name%"
 description: "%key1%"
+dependencies:
+  ffmpeg: 0.3.8

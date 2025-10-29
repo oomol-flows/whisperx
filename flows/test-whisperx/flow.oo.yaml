@@ -39,9 +39,9 @@ nodes:
       - handle: vad_filter
         value: true
       - handle: vad_onset
-        value: 0.1
+        value: 0.2
       - handle: vad_offset
-        value: 0.1
+        value: 0.2
       - handle: min_speech_duration
         value: 0.1
       - handle: min_silence_duration
@@ -135,8 +135,8 @@ nodes:
                   - mkv
                   - webm
                   - flv
+                  - f4v
             excludeAll: true
-        value: /oomol-driver/oomol-storage/video/kl.mp4
         nullable: false
   - node_id: translate-srt#1
     title: "Translate SRT Subtitles #1"

@@ -11,6 +11,16 @@ class Inputs(typing.TypedDict):
     enable_diarization: bool
     hf_token: typing.Optional[str]
     compute_type: str
+    beam_size: int
+    best_of: int
+    temperature: float
+    patience: float
+    length_penalty: float
+    condition_on_previous_text: bool
+    initial_prompt: typing.Optional[str]
+    vad_filter: bool
+    vad_onset: float
+    vad_offset: float
 
 
 class Outputs(typing.TypedDict):
@@ -74,6 +84,21 @@ def main(params: Inputs, context: Context) -> Outputs:
     hf_token = hf_token.strip() if hf_token else None
     compute_type = params.get("compute_type", "float16")
 
+    # Advanced transcription parameters
+    beam_size = params.get("beam_size", 5)
+    best_of = params.get("best_of", 5)
+    temperature = params.get("temperature", 0)
+    patience = params.get("patience", 1.0)
+    length_penalty = params.get("length_penalty", 1.0)
+    condition_on_previous_text = params.get("condition_on_previous_text", True)
+    initial_prompt = params.get("initial_prompt") or ""
+    initial_prompt = initial_prompt.strip() if initial_prompt else None
+
+    # VAD parameters
+    vad_filter = params.get("vad_filter", False)
+    vad_onset = params.get("vad_onset", 0.5)
+    vad_offset = params.get("vad_offset", 0.363)
+
     # Debug: Check diarization settings
     print(f"Enable diarization: {enable_diarization}")
     print(f"HF token available: {bool(hf_token)}")
@@ -104,8 +129,31 @@ def main(params: Inputs, context: Context) -> Outputs:
     )
     print(f"✓ Model {model_size} loaded successfully")
 
-    # Transcribe
-    result = model.transcribe(audio, batch_size=batch_size)
+    # Transcribe with advanced parameters
+    transcribe_options = {
+        "batch_size": batch_size,
+        "beam_size": beam_size,
+        "best_of": best_of,
+        "patience": patience,
+        "length_penalty": length_penalty,
+        "temperature": temperature,
+        "condition_on_previous_text": condition_on_previous_text,
+    }
+
+    # Add optional parameters
+    if initial_prompt:
+        transcribe_options["initial_prompt"] = initial_prompt
+
+    # Add VAD filter options
+    if vad_filter:
+        transcribe_options["vad_filter"] = True
+        transcribe_options["vad_parameters"] = {
+            "onset": vad_onset,
+            "offset": vad_offset
+        }
+
+    print(f"Transcribing with options: beam_size={beam_size}, temperature={temperature}, vad_filter={vad_filter}")
+    result = model.transcribe(audio, **transcribe_options)
 
     # Extract detected language if not specified
     detected_language = result.get("language", language or "unknown")

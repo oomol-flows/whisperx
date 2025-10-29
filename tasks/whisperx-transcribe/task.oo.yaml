@@ -9,7 +9,7 @@ inputs_def:
 
   # Basic Settings
   - group: Basic Settings
-    collapsed: true
+    collapsed: false
 
   - handle: model_size
     description: "%whisper-model-size-larger-more-accurate-but-slower%"
@@ -80,6 +80,99 @@ inputs_def:
         - int8
         - float32
     value: float16
+    nullable: false
+
+  # Advanced Transcription Settings
+  - group: Advanced Transcription Settings
+    collapsed: true
+
+  - handle: beam_size
+    description: "Beam size for beam search (5 recommended, larger = more accurate but slower)"
+    json_schema:
+      type: integer
+      minimum: 1
+      maximum: 10
+    value: 5
+    nullable: false
+
+  - handle: best_of
+    description: "Number of candidates when sampling with non-zero temperature"
+    json_schema:
+      type: integer
+      minimum: 1
+      maximum: 10
+    value: 5
+    nullable: false
+
+  - handle: temperature
+    description: "Sampling temperature (0 = deterministic, higher = more random)"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 1
+    value: 0
+    nullable: false
+
+  - handle: patience
+    description: "Patience for beam search (higher = explore more hypotheses)"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 2
+    value: 1.0
+    nullable: false
+
+  - handle: length_penalty
+    description: "Length penalty for beam search (>1 prefers longer, <1 prefers shorter)"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 2
+    value: 1.0
+    nullable: false
+
+  - handle: condition_on_previous_text
+    description: "Use previous text as context for next segment (improves coherence)"
+    json_schema:
+      type: boolean
+    value: true
+    nullable: false
+
+  - handle: initial_prompt
+    description: "Optional initial prompt to guide transcription style"
+    json_schema:
+      type: string
+      ui:widget: text
+    value:
+    nullable: true
+
+  # VAD (Voice Activity Detection) Settings
+  - group: VAD Settings
+    collapsed: true
+
+  - handle: vad_filter
+    description: "Enable VAD filter to reduce hallucinations and improve accuracy"
+    json_schema:
+      type: boolean
+    value: false
+    nullable: false
+
+  - handle: vad_onset
+    description: "VAD onset threshold (0-1, higher = stricter voice detection)"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 1
+    value: 0.5
+    nullable: false
+
+  - handle: vad_offset
+    description: "VAD offset threshold (0-1, when to stop detecting voice)"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 1
+    value: 0.363
     nullable: false
 
 outputs_def:

@@ -22,6 +22,26 @@ nodes:
         value: "${{OO_SECRET:HuggingFace,HuggingFace,HF_TOKEN}}"
       - handle: compute_type
         value: "float16"
+      - handle: beam_size
+        value: 5
+      - handle: best_of
+        value: 5
+      - handle: temperature
+        value: 0
+      - handle: patience
+        value: 1.0
+      - handle: length_penalty
+        value: 1.0
+      - handle: condition_on_previous_text
+        value: true
+      - handle: initial_prompt
+        value:
+      - handle: vad_filter
+        value: true
+      - handle: vad_onset
+        value: 0.5
+      - handle: vad_offset
+        value: 0.363
 
   - node_id: generate-srt#1
     task: self::generate-srt

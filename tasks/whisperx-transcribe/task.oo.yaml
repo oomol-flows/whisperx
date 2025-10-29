@@ -159,21 +159,31 @@ inputs_def:
     nullable: false
 
   - handle: vad_onset
-    description: "VAD onset threshold (0-1, higher = stricter voice detection)"
+    description: "VAD onset threshold (0-1, LOWER = more sensitive, try 0.3 if
+      losing audio)"
     json_schema:
       type: number
       minimum: 0
       maximum: 1
-    value: 0.5
+    value: 0.3
     nullable: false
 
   - handle: vad_offset
-    description: "VAD offset threshold (0-1, when to stop detecting voice)"
+    description: "VAD offset threshold (0-1, LOWER = keeps more audio)"
     json_schema:
       type: number
       minimum: 0
       maximum: 1
-    value: 0.363
+    value: 0.3
+    nullable: false
+
+  - handle: chunk_size
+    description: "Audio chunk size in seconds (default 30, smaller = more precise)"
+    json_schema:
+      type: integer
+      minimum: 10
+      maximum: 60
+    value: 30
     nullable: false
 
 outputs_def:

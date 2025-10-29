@@ -39,9 +39,11 @@ nodes:
       - handle: vad_filter
         value: true
       - handle: vad_onset
-        value: 0.5
+        value: 0.3
       - handle: vad_offset
-        value: 0.363
+        value: 0.3
+      - handle: chunk_size
+        value: 30
 
   - node_id: generate-srt#1
     task: self::generate-srt

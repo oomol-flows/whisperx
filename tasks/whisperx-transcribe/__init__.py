@@ -21,6 +21,7 @@ class Inputs(typing.TypedDict):
     vad_filter: bool
     vad_onset: float
     vad_offset: float
+    chunk_size: int
 
 
 class Outputs(typing.TypedDict):
@@ -96,8 +97,9 @@ def main(params: Inputs, context: Context) -> Outputs:
 
     # VAD parameters
     vad_filter = params.get("vad_filter", False)
-    vad_onset = params.get("vad_onset", 0.5)
-    vad_offset = params.get("vad_offset", 0.363)
+    vad_onset = params.get("vad_onset", 0.3)
+    vad_offset = params.get("vad_offset", 0.3)
+    chunk_size = params.get("chunk_size", 30)
 
     # Debug: Check diarization settings
     print(f"Enable diarization: {enable_diarization}")
@@ -142,13 +144,14 @@ def main(params: Inputs, context: Context) -> Outputs:
     vad_options = {
         "vad_onset": vad_onset,
         "vad_offset": vad_offset,
+        "chunk_size": chunk_size,
     }
 
     # Load model with ASR and VAD options
     print(f"Loading WhisperX model: {model_size}")
     print(f"Device: {device}, Compute type: {compute_type}")
     print(f"ASR options: beam_size={beam_size}, best_of={best_of}, temperature={temperature}")
-    print(f"VAD filter: {vad_filter}, onset={vad_onset}, offset={vad_offset}")
+    print(f"VAD options: onset={vad_onset}, offset={vad_offset}, chunk_size={chunk_size}")
 
     model = whisperx.load_model(
         model_size,

@@ -2,11 +2,11 @@
 import typing
 class Inputs(typing.TypedDict):
     json_file: str
+    subtitle_language_preset: typing.Literal["auto", "english", "chinese", "japanese", "custom"] | None
     include_speaker: bool | None
     output_path: str | None
     use_spacy_segmentation: bool | None
     spacy_model: typing.Literal["auto", "en_core_web_sm", "zh_core_web_sm", "ja_core_news_sm", "de_core_news_sm", "fr_core_news_sm", "es_core_news_sm"] | None
-    subtitle_language_preset: typing.Literal["auto", "english", "chinese", "japanese", "custom"] | None
     max_chars_per_subtitle: int | None
     max_duration_per_subtitle: float | None
     chars_per_second: float | None

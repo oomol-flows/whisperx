@@ -1,10 +1,15 @@
 inputs_def:
+  # Basic Input
   - handle: audio_file
     description: "%audio-file-to-transcribe-supports-mp3-wav-m4a-flac-etc%"
     json_schema:
       type: string
       ui:widget: file
     nullable: false
+
+  # Basic Settings
+  - group: Basic Settings
+    collapsed: true
 
   - handle: model_size
     description: "%whisper-model-size-larger-more-accurate-but-slower%"
@@ -27,21 +32,16 @@ inputs_def:
     value:
     nullable: true
 
-  - handle: batch_size
-    description: "%batch-size-for-inference-higher-faster-but-more-gpu-memory%"
-    json_schema:
-      type: integer
-      minimum: 1
-      maximum: 64
-    value: 16
-    nullable: false
-
   - handle: enable_alignment
     description: "%enable-word-level-timestamp-alignment-more-accurate-timestamps%"
     json_schema:
       type: boolean
     value: true
     nullable: false
+
+  # Speaker Diarization
+  - group: Speaker Diarization
+    collapsed: true
 
   - handle: enable_diarization
     description: "%enable-speaker-diarization-requires-huggingface-token%"
@@ -57,6 +57,19 @@ inputs_def:
       type: string
     value: ${{OO_SECRET:HuggingFace,HuggingFace,HF_TOKEN}}
     nullable: true
+
+  # Performance Settings
+  - group: Performance Settings
+    collapsed: true
+
+  - handle: batch_size
+    description: "%batch-size-for-inference-higher-faster-but-more-gpu-memory%"
+    json_schema:
+      type: integer
+      minimum: 1
+      maximum: 64
+    value: 16
+    nullable: false
 
   - handle: compute_type
     description: "%computation-precision-float16-for-gpu-int8-for-cpu%"

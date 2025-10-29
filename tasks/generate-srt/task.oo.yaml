@@ -1,4 +1,5 @@
 inputs_def:
+  # Basic Input
   - handle: json_file
     description: "%whisperx-transcription-json-file-with-segments-and-speaker-info%"
     json_schema:
@@ -6,11 +7,28 @@ inputs_def:
       ui:widget: file
     nullable: false
 
+  # Basic Options
+  - group: Basic Options
+    collapsed: true
+
+  - handle: subtitle_language_preset
+    description: "Language preset for subtitle standards (auto: detect from text)"
+    json_schema:
+      type: string
+      enum:
+        - auto
+        - english
+        - chinese
+        - japanese
+        - custom
+    value:
+    nullable: true
+
   - handle: include_speaker
     description: "%include-speaker-labels-in-subtitles-e-g-speaker_01%"
     json_schema:
       type: boolean
-    value: null
+    value:
     nullable: true
 
   - handle: output_path
@@ -24,14 +42,18 @@ inputs_def:
             extensions:
               - srt
         excludeAll: true
-    value: null
+    value:
     nullable: true
+
+  # Advanced Segmentation
+  - group: Advanced Segmentation
+    collapsed: true
 
   - handle: use_spacy_segmentation
     description: "Use spaCy for intelligent sentence segmentation"
     json_schema:
       type: boolean
-    value: null
+    value:
     nullable: true
 
   - handle: spacy_model
@@ -47,21 +69,12 @@ inputs_def:
         - de_core_news_sm
         - fr_core_news_sm
         - es_core_news_sm
-    value: null
+    value:
     nullable: true
 
-  - handle: subtitle_language_preset
-    description: "Language preset for subtitle standards (auto: detect from text)"
-    json_schema:
-      type: string
-      enum:
-        - auto
-        - english
-        - chinese
-        - japanese
-        - custom
-    value: null
-    nullable: true
+  # Custom Subtitle Parameters
+  - group: Custom Subtitle Parameters
+    collapsed: true
 
   - handle: max_chars_per_subtitle
     description: "Maximum characters per subtitle (EN: 42-84, CN: 15-20). Auto-set
@@ -70,7 +83,7 @@ inputs_def:
       type: integer
       minimum: 10
       maximum: 150
-    value: null
+    value:
     nullable: true
 
   - handle: max_duration_per_subtitle
@@ -79,7 +92,7 @@ inputs_def:
       type: number
       minimum: 0
       maximum: 10
-    value: null
+    value:
     nullable: true
 
   - handle: chars_per_second
@@ -89,7 +102,7 @@ inputs_def:
       type: number
       minimum: 1
       maximum: 50
-    value: null
+    value:
     nullable: true
 
   - handle: max_words_per_subtitle
@@ -99,7 +112,7 @@ inputs_def:
       type: integer
       minimum: 0
       maximum: 30
-    value: null
+    value:
     nullable: true
 
 outputs_def:

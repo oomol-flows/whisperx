@@ -1,0 +1,21 @@
+title: "Test SRT Translation"
+nodes:
+  - node_id: translate-srt#1
+    task: self::translate-srt
+    inputs_from:
+      - handle: srt_file
+        value: /oomol-driver/oomol-storage/whisperx-output/bm_audio_transcription.srt
+      - handle: target_language
+        value: Chinese
+      - handle: source_language
+        value: English
+      - handle: batch_size
+        value: 3
+      - handle: output_path
+        value:
+      - handle: llm
+        value:
+          model: deepseek-chat
+          temperature: 0.5
+          top_p: 1
+          max_tokens: 128000

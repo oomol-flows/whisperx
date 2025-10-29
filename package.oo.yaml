@@ -11,5 +11,4 @@ releaseNotes: init
 displayName: "%display-name%"
 description: "%key1%"
 dependencies:
-  ffmpeg: 0.3.8
-  srt-lab: 0.1.4
+  ffmpeg: 0.4.1

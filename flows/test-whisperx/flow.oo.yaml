@@ -71,8 +71,8 @@ nodes:
             output_handle: video_file
       - handle: subtitle_file
         from_node:
-          - node_id: srt-translation#1
-            output_handle: srt_file
+          - node_id: translate-srt#1
+            output_handle: translated_srt_file
       - handle: subtitle_style
         value: default
       - handle: font_name
@@ -112,18 +112,20 @@ nodes:
             excludeAll: true
         value: /oomol-driver/oomol-storage/video/bm.mp4
         nullable: false
-  - node_id: srt-translation#1
-    title: "SRT 翻译 #1"
+  - node_id: translate-srt#1
+    title: "Translate SRT Subtitles #1"
     inputs_from:
       - handle: srt_file
         from_node:
           - node_id: generate-srt#1
             output_handle: srt_file
-      - handle: source_language
-        value: auto
       - handle: target_language
-        value: zh
-      - handle: translation_style
+        value: Chinese
+      - handle: source_language
+        value: null
+      - handle: batch_size
+        value: 10
+      - handle: output_path
         value: null
       - handle: llm
         value:
@@ -131,4 +133,4 @@ nodes:
           temperature: 0.5
           top_p: 1
           max_tokens: 128000
-    task: srt-lab::srt-translation
+    task: self::translate-srt

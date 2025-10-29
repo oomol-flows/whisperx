@@ -1,0 +1,98 @@
+inputs_def:
+  # Basic Input
+  - handle: srt_file
+    description: "SRT subtitle file to translate"
+    json_schema:
+      type: string
+      ui:widget: file
+    nullable: false
+
+  - handle: target_language
+    description: "Target language for translation"
+    json_schema:
+      type: string
+      enum:
+        - Chinese
+        - English
+        - Japanese
+        - Korean
+        - Spanish
+        - French
+        - German
+        - Russian
+    value: Chinese
+    nullable: false
+
+  # Optional Settings
+  - group: Optional Settings
+    collapsed: true
+
+  - handle: source_language
+    description: "Source language (auto-detect if not specified)"
+    json_schema:
+      type: string
+    value:
+    nullable: true
+
+  - handle: batch_size
+    description: "Number of subtitle entries to translate per batch (1-10, smaller
+      batches for longer subtitles)"
+    json_schema:
+      type: integer
+      minimum: 1
+      maximum: 10
+    value: 5
+    nullable: true
+
+  - handle: output_path
+    description: "Output SRT file path (auto-generated if not specified)"
+    json_schema:
+      type: string
+      ui:widget: save
+      ui:options:
+        filters:
+          - name: SRT
+            extensions:
+              - srt
+        excludeAll: true
+    value:
+    nullable: true
+
+  # LLM Configuration
+  - group: LLM Configuration
+    collapsed: true
+
+  - handle: llm
+    description: "LLM model configuration"
+    json_schema:
+      ui:options:
+        title: Model
+      ui:widget: llm::model
+    value:
+      model: oomol-chat
+      temperature: 0.5
+      top_p: 1
+      max_tokens: 262144
+    nullable: false
+
+outputs_def:
+  - handle: translated_srt_file
+    description: "Path to the translated SRT file"
+    json_schema:
+      type: string
+
+  - handle: total_entries
+    description: "Total number of subtitle entries translated"
+    json_schema:
+      type: integer
+
+executor:
+  name: python
+  options:
+    entry: __init__.py
+    spawn: false
+
+title: "Translate SRT Subtitles"
+icon: ":carbon:translate:"
+description: "Translate SRT subtitle files to different languages using LLM
+  while preserving timing and formatting"

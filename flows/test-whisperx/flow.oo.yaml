@@ -11,7 +11,7 @@ nodes:
       - handle: model_size
         value: large-v3
       - handle: language
-        value: ""
+        value: en
       - handle: batch_size
         value: 16
       - handle: enable_alignment

@@ -78,8 +78,10 @@ def main(params: Inputs, context: Context) -> Outputs:
     """
     audio_file = params["audio_file"]
     model_size = params["model_size"]
-    language = params.get("language") or ""
-    language = language.strip() if language else None
+    language = params.get("language", "auto")
+    # Convert "auto" to None for auto-detection
+    if language == "auto" or not language or language.strip() == "":
+        language = None
     batch_size = params.get("batch_size", 16)
     enable_alignment = params.get("enable_alignment", True)
     enable_diarization = params.get("enable_diarization", False)

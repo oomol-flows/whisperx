@@ -26,11 +26,31 @@ inputs_def:
     nullable: false
 
   - handle: language
-    description: "%language-code-e-g-en-zh-ja-leave-empty-for-auto-detection%"
+    description: "Language for transcription (auto-detect if not specified)"
     json_schema:
       type: string
-    value:
-    nullable: true
+      enum:
+        - auto
+        - zh
+        - en
+        - ja
+        - ko
+        - es
+        - fr
+        - de
+        - ru
+        - ar
+        - pt
+        - it
+        - nl
+        - pl
+        - tr
+        - vi
+        - id
+        - th
+        - hi
+    value: auto
+    nullable: false
 
   - handle: enable_alignment
     description: "%enable-word-level-timestamp-alignment-more-accurate-timestamps%"

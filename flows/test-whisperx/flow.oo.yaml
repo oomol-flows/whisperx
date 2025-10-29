@@ -11,7 +11,7 @@ nodes:
       - handle: model_size
         value: large-v3
       - handle: language
-        value:
+        value: ""
       - handle: batch_size
         value: 16
       - handle: enable_alignment
@@ -39,9 +39,13 @@ nodes:
       - handle: vad_filter
         value: true
       - handle: vad_onset
-        value: 0.3
+        value: 0.2
       - handle: vad_offset
-        value: 0.3
+        value: 0.2
+      - handle: min_speech_duration
+        value: 0.1
+      - handle: min_silence_duration
+        value: 0.1
       - handle: chunk_size
         value: 30
 

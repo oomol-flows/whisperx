@@ -21,6 +21,8 @@ class Inputs(typing.TypedDict):
     vad_filter: bool
     vad_onset: float
     vad_offset: float
+    min_speech_duration: float
+    min_silence_duration: float
     chunk_size: int
 
 
@@ -97,8 +99,10 @@ def main(params: Inputs, context: Context) -> Outputs:
 
     # VAD parameters
     vad_filter = params.get("vad_filter", False)
-    vad_onset = params.get("vad_onset", 0.3)
-    vad_offset = params.get("vad_offset", 0.3)
+    vad_onset = params.get("vad_onset", 0.2)
+    vad_offset = params.get("vad_offset", 0.2)
+    min_speech_duration = params.get("min_speech_duration", 0.0)
+    min_silence_duration = params.get("min_silence_duration", 0.0)
     chunk_size = params.get("chunk_size", 30)
 
     # Debug: Check diarization settings
@@ -141,11 +145,15 @@ def main(params: Inputs, context: Context) -> Outputs:
         asr_options["initial_prompt"] = initial_prompt
 
     # Prepare VAD options
+    # Note: min_speech_duration and min_silence_duration are not supported by WhisperX
+    # They are hardcoded to 0.1s in load_vad_model
     vad_options = {
         "vad_onset": vad_onset,
         "vad_offset": vad_offset,
         "chunk_size": chunk_size,
     }
+
+    print(f"⚠️  Note: WhisperX hardcodes min_duration_on/off to 0.1s (cannot be changed)")
 
     # Load model with ASR and VAD options
     print(f"Loading WhisperX model: {model_size}")

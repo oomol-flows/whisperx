@@ -159,22 +159,41 @@ inputs_def:
     nullable: false
 
   - handle: vad_onset
-    description: "VAD onset threshold (0-1, LOWER = more sensitive, try 0.3 if
-      losing audio)"
+    description: "VAD onset threshold (0-1, LOWER = more sensitive, 0.2 for max capture)"
     json_schema:
       type: number
       minimum: 0
       maximum: 1
-    value: 0.3
+    value: 0.2
     nullable: false
 
   - handle: vad_offset
-    description: "VAD offset threshold (0-1, LOWER = keeps more audio)"
+    description: "VAD offset threshold (0-1, LOWER = keeps more audio, 0.2 recommended)"
     json_schema:
       type: number
       minimum: 0
       maximum: 1
-    value: 0.3
+    value: 0.2
+    nullable: false
+
+  - handle: min_speech_duration
+    description: "Min speech duration in seconds (WhisperX fixed at 0.1s, this param
+      is ignored)"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 2
+    value: 0.1
+    nullable: false
+
+  - handle: min_silence_duration
+    description: "Min silence duration in seconds (WhisperX fixed at 0.1s, this
+      param is ignored)"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 2
+    value: 0.1
     nullable: false
 
   - handle: chunk_size

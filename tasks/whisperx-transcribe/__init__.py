@@ -118,42 +118,51 @@ def main(params: Inputs, context: Context) -> Outputs:
     # Load audio
     audio = whisperx.load_audio(audio_file)
 
-    # Load model
-    print(f"Loading WhisperX model: {model_size}")
-    print(f"Device: {device}, Compute type: {compute_type}")
-    model = whisperx.load_model(
-        model_size,
-        device,
-        compute_type=compute_type,
-        language=language
-    )
-    print(f"✓ Model {model_size} loaded successfully")
-
-    # Transcribe with advanced parameters
-    transcribe_options = {
-        "batch_size": batch_size,
+    # Prepare ASR options for model loading
+    asr_options = {
         "beam_size": beam_size,
         "best_of": best_of,
         "patience": patience,
         "length_penalty": length_penalty,
-        "temperature": temperature,
         "condition_on_previous_text": condition_on_previous_text,
     }
 
-    # Add optional parameters
+    # Handle temperature parameter (can be single value or list)
+    if isinstance(temperature, (int, float)):
+        if temperature == 0:
+            asr_options["temperatures"] = [0.0]
+        else:
+            asr_options["temperatures"] = [temperature]
+
+    # Add initial prompt if provided
     if initial_prompt:
-        transcribe_options["initial_prompt"] = initial_prompt
+        asr_options["initial_prompt"] = initial_prompt
 
-    # Add VAD filter options
-    if vad_filter:
-        transcribe_options["vad_filter"] = True
-        transcribe_options["vad_parameters"] = {
-            "onset": vad_onset,
-            "offset": vad_offset
-        }
+    # Prepare VAD options
+    vad_options = {
+        "vad_onset": vad_onset,
+        "vad_offset": vad_offset,
+    }
 
-    print(f"Transcribing with options: beam_size={beam_size}, temperature={temperature}, vad_filter={vad_filter}")
-    result = model.transcribe(audio, **transcribe_options)
+    # Load model with ASR and VAD options
+    print(f"Loading WhisperX model: {model_size}")
+    print(f"Device: {device}, Compute type: {compute_type}")
+    print(f"ASR options: beam_size={beam_size}, best_of={best_of}, temperature={temperature}")
+    print(f"VAD filter: {vad_filter}, onset={vad_onset}, offset={vad_offset}")
+
+    model = whisperx.load_model(
+        model_size,
+        device,
+        compute_type=compute_type,
+        language=language,
+        asr_options=asr_options,
+        vad_options=vad_options
+    )
+    print(f"✓ Model {model_size} loaded successfully")
+
+    # Transcribe with batch_size
+    print(f"Transcribing audio with batch_size={batch_size}...")
+    result = model.transcribe(audio, batch_size=batch_size)
 
     # Extract detected language if not specified
     detected_language = result.get("language", language or "unknown")

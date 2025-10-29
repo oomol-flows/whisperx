@@ -87,7 +87,8 @@ inputs_def:
     collapsed: true
 
   - handle: beam_size
-    description: "Beam size for beam search (5 recommended, larger = more accurate but slower)"
+    description: "Beam size for beam search (5 recommended, larger = more accurate
+      but slower)"
     json_schema:
       type: integer
       minimum: 1
@@ -119,7 +120,7 @@ inputs_def:
       type: number
       minimum: 0
       maximum: 2
-    value: 1.0
+    value: 1
     nullable: false
 
   - handle: length_penalty
@@ -128,7 +129,7 @@ inputs_def:
       type: number
       minimum: 0
       maximum: 2
-    value: 1.0
+    value: 1
     nullable: false
 
   - handle: condition_on_previous_text
@@ -154,7 +155,7 @@ inputs_def:
     description: "Enable VAD filter to reduce hallucinations and improve accuracy"
     json_schema:
       type: boolean
-    value: false
+    value: true
     nullable: false
 
   - handle: vad_onset

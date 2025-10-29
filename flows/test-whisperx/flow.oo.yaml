@@ -136,7 +136,7 @@ nodes:
                   - webm
                   - flv
             excludeAll: true
-        value: /oomol-driver/oomol-storage/video/bm.mp4
+        value: /oomol-driver/oomol-storage/video/kl.mp4
         nullable: false
   - node_id: translate-srt#1
     title: "Translate SRT Subtitles #1"

@@ -196,6 +196,57 @@ def main(params: Inputs, context: Context) -> Outputs:
                 return_char_alignments=False
             )
             print(f"✓ Alignment completed successfully")
+
+            # Post-process: Fix unreasonable word timings
+            # This addresses the issue where the first word's end time
+            # extends too far beyond the actual speech
+            segments = result.get("segments", [])
+            for seg in segments:
+                words = seg.get("words", [])
+                if not words:
+                    continue
+
+                # Fix first word timing if it's unreasonably long
+                if len(words) >= 2:
+                    first_word = words[0]
+                    second_word = words[1]
+
+                    # If first word duration is > 3 seconds, likely a VAD boundary issue
+                    word_duration = first_word["end"] - first_word["start"]
+                    if word_duration > 3.0:
+                        # Estimate reasonable duration based on word length
+                        # Average speaking rate: ~3-4 chars per second
+                        word_text = first_word.get("word", "").strip()
+                        estimated_duration = max(0.2, len(word_text) * 0.15)
+
+                        # Cap at 1.5 seconds for single words
+                        estimated_duration = min(1.5, estimated_duration)
+
+                        print(f"⚠️  Fixing timing for first word '{word_text}': "
+                              f"{word_duration:.2f}s → {estimated_duration:.2f}s")
+
+                        first_word["end"] = first_word["start"] + estimated_duration
+
+                # Similarly fix any other words with unreasonable durations
+                for i, word in enumerate(words):
+                    word_duration = word["end"] - word["start"]
+                    if word_duration > 5.0:  # No single word should be > 5 seconds
+                        word_text = word.get("word", "").strip()
+                        estimated_duration = max(0.2, len(word_text) * 0.15)
+                        estimated_duration = min(2.0, estimated_duration)
+
+                        print(f"⚠️  Fixing timing for word '{word_text}': "
+                              f"{word_duration:.2f}s → {estimated_duration:.2f}s")
+
+                        word["end"] = word["start"] + estimated_duration
+
+                # Update segment timing based on corrected word timings
+                if words:
+                    seg["start"] = words[0]["start"]
+                    seg["end"] = words[-1]["end"]
+
+            print(f"✓ Post-processed timestamps for accuracy")
+
         except Exception as e:
             print(f"⚠ Alignment failed: {str(e)}")
             # Continue with unaligned results

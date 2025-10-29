@@ -39,9 +39,9 @@ nodes:
       - handle: vad_filter
         value: true
       - handle: vad_onset
-        value: 0.2
+        value: 0.1
       - handle: vad_offset
-        value: 0.2
+        value: 0.1
       - handle: min_speech_duration
         value: 0.1
       - handle: min_silence_duration

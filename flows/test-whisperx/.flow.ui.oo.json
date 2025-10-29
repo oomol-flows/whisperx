@@ -44,6 +44,22 @@
           "y": 182.5
         }
       }
+    },
+    "translate-srt#1": {
+      "rfNode": {
+        "position": {
+          "x": 2085.53818873528,
+          "y": 500.04462735311506
+        }
+      },
+      "sections": {
+        "inputs": {
+          "groupCollapsed": {
+            "Optional Settings": true,
+            "LLM Configuration": true
+          }
+        }
+      }
     }
   }
 }

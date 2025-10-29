@@ -1,13 +1,13 @@
 {
-  "title": "Test SRT Translation",
-  "default_width": 300,
-  "nodes": [
-    {
-      "id": "translate-srt#1",
-      "position": {
-        "x": 100,
-        "y": 100
+  "nodes": {
+    "translate-srt#1": {
+      "contentWidth": 350,
+      "rfNode": {
+        "position": {
+          "x": 0,
+          "y": 0
+        }
       }
     }
-  ]
+  }
 }

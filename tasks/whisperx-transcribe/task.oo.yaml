@@ -169,7 +169,7 @@ inputs_def:
 
   # VAD (Voice Activity Detection) Settings
   - group: VAD Settings
-    collapsed: true
+    collapsed: false
 
   - handle: vad_filter
     description: "Enable VAD filter to reduce hallucinations and improve accuracy"
@@ -184,7 +184,7 @@ inputs_def:
       type: number
       minimum: 0
       maximum: 1
-    value: 0.2
+    value: 0.1
     nullable: false
 
   - handle: vad_offset
@@ -193,7 +193,7 @@ inputs_def:
       type: number
       minimum: 0
       maximum: 1
-    value: 0.2
+    value: 0.1
     nullable: false
 
   - handle: min_speech_duration

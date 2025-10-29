@@ -124,13 +124,19 @@ def translate_batch(
 
     prompt = f"""You are a professional subtitle translator. Translate the following subtitles{source_lang_hint} to {target_language}.
 
-IMPORTANT INSTRUCTIONS:
+CRITICAL FORMATTING RULES - FOLLOW EXACTLY:
 1. Translate EVERY subtitle entry - do not skip or omit any entries
-2. Preserve the [index] numbers exactly as they appear
-3. Maintain natural and accurate translation appropriate for subtitles
-4. Keep the formatting: one translation per line with [index] prefix
-5. Do not add explanations or additional content
-6. Preserve speaker labels if present (e.g., [Speaker_01])
+2. Preserve the [index] numbers EXACTLY as they appear
+3. Output ONLY the translated lines in format: [index] translated_text
+4. Each translation must be on a SINGLE line (no line breaks within translations)
+5. Do NOT add any explanations, comments, or additional content
+6. Do NOT add blank lines between translations
+7. Preserve speaker labels if present (e.g., [Speaker_01])
+
+Example format:
+[1] First translated subtitle
+[2] Second translated subtitle
+[3] Third translated subtitle
 
 Subtitles to translate:
 
@@ -164,32 +170,53 @@ Translated subtitles:"""
 
         translated_text = response.choices[0].message.content.strip()
 
-        # Parse translated text back into individual entries
+        # Parse translated text back into individual entries with strict index validation
         translated_entries = []
+        index_to_translation = {}  # Map index to translation
         lines = translated_text.split('\n')
 
+        # First pass: collect all valid translations with their indices
         for line in lines:
             line = line.strip()
             if not line:
                 continue
 
-            # Match pattern [index] text
+            # Match pattern [index] text (strict validation)
             match = re.match(r'\[(\d+)\]\s*(.+)', line)
             if match:
-                translated_entries.append(match.group(2).strip())
+                index = int(match.group(1))
+                translation = match.group(2).strip()
+
+                # Only accept translations with indices matching our entries
+                if any(entry.index == index for entry in entries):
+                    if index in index_to_translation:
+                        print(f"Warning: Duplicate translation for index [{index}], keeping first occurrence")
+                    else:
+                        index_to_translation[index] = translation
+                else:
+                    print(f"Warning: Ignoring translation with invalid index [{index}] (not in current batch)")
             else:
-                # If no index found, still add the line (fallback)
-                translated_entries.append(line)
+                # Log lines that don't match expected format
+                if len(line) > 5:  # Ignore very short lines (likely fragments)
+                    print(f"Warning: Ignoring malformed line (no index): {line[:50]}...")
 
-        # Verify we got all translations
-        if len(translated_entries) != len(entries):
-            print(f"Warning: Expected {len(entries)} translations, got {len(translated_entries)}")
+        # Second pass: build ordered translation list matching input entries
+        for entry in entries:
+            if entry.index in index_to_translation:
+                translated_entries.append(index_to_translation[entry.index])
+            else:
+                print(f"Warning: Missing translation for entry [{entry.index}], using original text")
+                translated_entries.append(entry.text)
 
-            # Pad with original text if missing translations
-            while len(translated_entries) < len(entries):
-                missing_idx = len(translated_entries)
-                print(f"Missing translation for entry {entries[missing_idx].index}, using original text")
-                translated_entries.append(entries[missing_idx].text)
+        # Verification summary
+        found_count = len(index_to_translation)
+        expected_count = len(entries)
+
+        if found_count != expected_count:
+            print(f"Translation mismatch: Expected {expected_count}, found {found_count} valid translations")
+            print(f"Missing indices: {[e.index for e in entries if e.index not in index_to_translation]}")
+        else:
+            print(f"Successfully translated {found_count}/{expected_count} entries")
 
         return translated_entries
 
